@@ -36,7 +36,7 @@ SKILL_PATH = REPO / "SKILL.md"
 CONNECTORS = REPO / "connectors"
 
 
-mcp = FastMCP("rapidapi-helper")
+mcp = FastMCP("kz-academy")
 
 
 # === Resources: статические markdown-файлы ===

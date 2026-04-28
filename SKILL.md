@@ -1,5 +1,5 @@
 ---
-name: rapidapi-helper
+name: kz-academy
 description: Используй этот скилл, когда пользователь работает с любым API из RapidAPI Hub — формирует HTTP-запросы, разбирается с заголовками авторизации (X-RapidAPI-Key, X-RapidAPI-Host), отлаживает ошибки 401/403/429, спрашивает про стоимость/тарифы/квоту RapidAPI, упоминает конкретный коннектор (yt-api, telegram-channel, threads-api4, tiktok-api23, instagram-looter2, weather, translate и т.п.), строит контент-завод/виральный анализ/мониторинг блогеров/транскрипцию и переписывание скриптов на базе этих коннекторов, выбирает LLM-модель (Claude/GPT/Gemini/DeepSeek через OpenRouter) под задачу или сравнивает их по цене, или запускает все сервисы (Whisper, S3, Telegram Bot, PostgreSQL) для полного pipeline. Скилл содержит общие правила работы с RapidAPI, расчёт расходов по тарифным планам, карточки коннекторов с верифицированными тарифами, готовые методологии контент-завода (docs/methodology/), сравнение 367+ LLM-моделей с verified ценами OpenRouter, и пошаговый full-stack setup всех необходимых сервисов (docs/full-stack-setup.md).
 ---
 

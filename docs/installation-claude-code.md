@@ -8,7 +8,7 @@
 
 ```bash
 mkdir -p .claude/skills
-git clone https://github.com/<your-org>/rapidapi-helper.git .claude/skills/rapidapi-helper
+git clone https://github.com/Mobiss11/kz-academy.git .claude/skills/kz-academy
 ```
 
 Claude Code будет видеть скилл только в этом проекте.
@@ -19,7 +19,7 @@ Claude Code будет видеть скилл только в этом прое
 
 ```bash
 mkdir -p ~/.claude/skills
-git clone https://github.com/<your-org>/rapidapi-helper.git ~/.claude/skills/rapidapi-helper
+git clone https://github.com/Mobiss11/kz-academy.git ~/.claude/skills/kz-academy
 ```
 
 ## Проверка
@@ -33,6 +33,6 @@ Claude должен сам открыть `SKILL.md` и `connectors/yt-api.md`. 
 ## Обновление
 
 ```bash
-cd ~/.claude/skills/rapidapi-helper  # или .claude/skills/rapidapi-helper
+cd ~/.claude/skills/kz-academy  # или .claude/skills/kz-academy
 git pull
 ```

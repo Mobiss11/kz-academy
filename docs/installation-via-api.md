@@ -18,7 +18,7 @@ import os
 from pathlib import Path
 from anthropic import Anthropic
 
-REPO = Path(__file__).resolve().parent.parent  # путь к корню rapidapi-helper
+REPO = Path(__file__).resolve().parent.parent  # путь к корню kz-academy
 
 # Соберём контекст: SKILL.md + все нужные карточки
 def load_skill_context(connectors: list[str]) -> str:

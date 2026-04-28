@@ -62,10 +62,8 @@
 
 ```bash
 # 1. Клонируй репозиторий (или скачай ZIP с GitHub если не пользуешься git)
-# ⚠️ Замени <your-org> на реальный аккаунт. Если получил репо от препода
-# через zip/курс — пропусти clone и работай в папке которую тебе дали.
-git clone https://github.com/<your-org>/rapidapi-helper.git
-cd rapidapi-helper
+git clone https://github.com/Mobiss11/kz-academy.git
+cd kz-academy
 
 # 2. Скопируй пример .env и пропиши ключ
 cp .env.example .env

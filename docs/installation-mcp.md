@@ -65,16 +65,16 @@ python -m scripts.mcp_server
 ```json
 {
   "mcpServers": {
-    "rapidapi-helper": {
+    "kz-academy": {
       "command": "python",
       "args": ["-m", "scripts.mcp_server"],
-      "cwd": "/абсолютный/путь/к/rapidapi-helper"
+      "cwd": "/абсолютный/путь/к/kz-academy"
     }
   }
 }
 ```
 
-Перезапусти Claude Desktop. В чате должен появиться значок 🔌 — кликни и проверь что `rapidapi-helper` подключён.
+Перезапусти Claude Desktop. В чате должен появиться значок 🔌 — кликни и проверь что `kz-academy` подключён.
 
 > 💡 Если используешь виртуальное окружение, укажи путь к Python внутри venv:
 > ```json
@@ -88,10 +88,10 @@ python -m scripts.mcp_server
 ```json
 {
   "mcpServers": {
-    "rapidapi-helper": {
+    "kz-academy": {
       "command": "python",
       "args": ["-m", "scripts.mcp_server"],
-      "cwd": "/abs/path/to/rapidapi-helper"
+      "cwd": "/abs/path/to/kz-academy"
     }
   }
 }
@@ -105,10 +105,10 @@ python -m scripts.mcp_server
 {
   "mcpServers": [
     {
-      "name": "rapidapi-helper",
+      "name": "kz-academy",
       "command": "python",
       "args": ["-m", "scripts.mcp_server"],
-      "cwd": "/abs/path/to/rapidapi-helper"
+      "cwd": "/abs/path/to/kz-academy"
     }
   ]
 }
@@ -123,7 +123,7 @@ mcp_server = MCPServerStdio(
     params={
         "command": "python",
         "args": ["-m", "scripts.mcp_server"],
-        "cwd": "/abs/path/to/rapidapi-helper",
+        "cwd": "/abs/path/to/kz-academy",
     }
 )
 

@@ -7,7 +7,7 @@
 1. Склонируй репозиторий куда удобно (например, рядом с проектом):
 
    ```bash
-   git clone https://github.com/<your-org>/rapidapi-helper.git
+   git clone https://github.com/Mobiss11/kz-academy.git
    ```
 
 2. В корне твоего проекта создай `.cursor/rules/rapidapi.mdc`:
@@ -23,9 +23,9 @@
 
    Когда задача связана с RapidAPI:
 
-   1. Сначала прочитай @../rapidapi-helper/SKILL.md — там общие правила.
-   2. Затем найди карточку нужного коннектора в @../rapidapi-helper/connectors/.
-   3. При создании кода используй обвязку из @../rapidapi-helper/examples/common.py.
+   1. Сначала прочитай @../kz-academy/SKILL.md — там общие правила.
+   2. Затем найди карточку нужного коннектора в @../kz-academy/connectors/.
+   3. При создании кода используй обвязку из @../kz-academy/examples/common.py.
 
    Ключевые правила:
    - Всегда передавай оба хедера: X-RapidAPI-Key и X-RapidAPI-Host.
@@ -33,7 +33,7 @@
    - При 403 — проверь хедер Host и подписку на API.
    ```
 
-   Поправь пути `@../rapidapi-helper/...` под фактическое расположение клона.
+   Поправь пути `@../kz-academy/...` под фактическое расположение клона относительно твоего проекта.
 
 ## Вариант 2: через `.cursorrules` (legacy)
 

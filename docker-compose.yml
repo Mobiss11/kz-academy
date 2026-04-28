@@ -1,7 +1,7 @@
 services:
   app:
     build: .
-    image: rapidapi-helper:latest
+    image: kz-academy:latest
     env_file:
       - .env
     volumes:
