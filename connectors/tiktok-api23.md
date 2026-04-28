@@ -10,7 +10,7 @@
 
 Полнофункциональный API для парсинга **TikTok**: пользователи, видео, лайвы, музыка, эффекты, плейсы, коллекции, тренды (creator/video/hashtag/song/keyword/ads), магазин и скачивание медиа. **56 эндпоинтов** (все GET) в 12 группах + 1 standalone.
 
-> ✅ **Источник схемы.** Из 56 эндпоинтов **41 имеет Example Response** в Playground (зафиксированы провайдером), остальные **15** провалидированы реальными API-вызовами на Basic-плане (2026-04-28). Тарифы и формат 401 — verified живым вызовом. Все top-level ключи и edge-cases (401 disabled, 204 empty, status_code error) собраны в секции "Verified response shapes" в конце карточки.
+> ✅ **Источник схемы.** Из 56 эндпоинтов **41 имеет Example Response** в Playground (зафиксированы провайдером), остальные **15** провалидированы реальными API-вызовами на Basic-плане (2026-04-28). Полный pole-by-полю reference со всеми ключами + edge-cases (401 disabled, 204 empty, status_code errors) — в **[_responses/tiktok-api23.md](_responses/tiktok-api23.md)**.
 >
 > Размер этого API в 4-5 раз больше typical RapidAPI коннектора. **Перед прод-кодом сверяйся с playground** — провайдер часто меняет имена полей.
 

@@ -1047,7 +1047,7 @@ Continuation tokens бывают по 2-3 КБ. Решения:
 
 ### Provider не положил Example Response
 
-Несколько эндпоинтов в playground не имеют примера ответа: `/subtitles`, `/subtitle`, `/updated_metadata`, `/post/comments`. Все четыре прозвонены реальными запросами 2026-04-28 на Basic-плане:
+Несколько эндпоинтов в playground не имеют примера ответа: `/subtitles`, `/subtitle`, `/updated_metadata`, `/post/comments`. Все четыре прозвонены реальными запросами 2026-04-28 на Basic-плане. Полные shape'ы — в **[_responses/yt-api.md](_responses/yt-api.md)**.
 
 ```jsonc
 // GET /subtitle?url=<vtt_or_srt_url> → 200

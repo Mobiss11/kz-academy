@@ -364,7 +364,7 @@ def paginate(path, params, max_pages=10):
 > ```json
 > {"errors":[{"message":"execution error","path":["data"],"severity":"CRITICAL"}],"data":null,"extensions":{"is_final":true,"server_metadata":{...}},"status":"ok"}
 > ```
-> Всегда проверяй `data !== null` перед обработкой.
+> Всегда проверяй `data !== null` перед обработкой. Полный reference по полям всех 12 эндпоинтов — в **[_responses/threads-api4.md](_responses/threads-api4.md)**.
 
 ---
 
