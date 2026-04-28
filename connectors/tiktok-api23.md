@@ -10,7 +10,7 @@
 
 Полнофункциональный API для парсинга **TikTok**: пользователи, видео, лайвы, музыка, эффекты, плейсы, коллекции, тренды (creator/video/hashtag/song/keyword/ads), магазин и скачивание медиа. **56 эндпоинтов** (все GET) в 12 группах + 1 standalone.
 
-> ✅ **Источник схемы.** Карточка собрана из RapidAPI Playground (path + method + params всех 56 эндпоинтов). Тарифы и формат 401 — verified живым вызовом. JSON-структуры приведены для ключевых эндпоинтов; остальные группы имеют единый паттерн ответа.
+> ✅ **Источник схемы.** Из 56 эндпоинтов **41 имеет Example Response** в Playground (зафиксированы провайдером), остальные **15** провалидированы реальными API-вызовами на Basic-плане (2026-04-28). Тарифы и формат 401 — verified живым вызовом. Все top-level ключи и edge-cases (401 disabled, 204 empty, status_code error) собраны в секции "Verified response shapes" в конце карточки.
 >
 > Размер этого API в 4-5 раз больше typical RapidAPI коннектора. **Перед прод-кодом сверяйся с playground** — провайдер часто меняет имена полей.
 
@@ -611,3 +611,140 @@ BANDWIDTH: 5000 × ~5 MB = 25 GB → overage 15 GB × $0.001 = $15
 - **Официальный TikTok Research API** (https://developers.tiktok.com/products/research-api) — бесплатно для исследователей, но требует одобрения от TikTok.
 - **TikTok Display API** — для приложений с OAuth-авторизацией, ограничен данными авторизованного юзера.
 - Этот RapidAPI-коннектор — компромисс: ничего не настраиваешь, работает сразу с публичными данными, но не подходит для очень больших объёмов и требует custom-plan для Ads/Trending.
+
+---
+
+## Verified response shapes (2026-04-28)
+
+> ✅ Реально-проверено по 15 эндпоинтам, у которых **не было** Example Response в playground. Для остальных 41 — Playground-данные считаются authoritative (захвачены отдельно в репозитории, ниже только то, что отличается или содержит edge-cases).
+
+### 🟢 Стандартный «успешный» паттерн ответа
+
+Большинство эндпоинтов TikTok возвращают `200 OK` с этой обёрткой:
+
+```jsonc
+{
+  "extra": { "fatal_item_ids": [], "logid": "<request_log_id>", "now": 1777383675000 },
+  "status_code": 0,        // 0 = успех. Любое != 0 = ошибка (см. ниже)
+  "cursor": "10",          // если эндпоинт пагинируется
+  "hasMore": true,
+  // далее доменные ключи: itemList | userList | userInfo | data | ...
+}
+```
+
+### Что вернулось у 15 эндпоинтов БЕЗ playground-примера
+
+```jsonc
+// GET /api/post/trending → 200 — реальный успех
+{
+  "cursor": "0",
+  "extra": { "fatal_item_ids": [], "logid": "<x>", "now": <ts> },
+  "hasMore": true,
+  "itemList": [ /* массив Aweme-объектов с author, music, video, statsV2, anchors[] */ ]
+}
+
+// GET /api/collection/posts → 200
+{
+  "cursor": "10",
+  "extra": { "fatal_item_ids": [], "logid": "<x>", "now": <ts> },
+  "hasMore": true,
+  "itemList": [ /* посты коллекции, такая же Aweme-структура как /post/trending */ ]
+}
+
+// GET /api/search/video → 200
+// Ответ имеет ту же `itemList`-обёртку с дополнительными полями search_id/ad_data
+{ "cursor": "...", "hasMore": true, "itemList": [...], "extra": {...}, "status_code": 0 }
+
+// GET /api/live/check-alive?room_ids[]=... → 200
+{
+  "data": [ { "alive": false, "room_id": <int>, "room_id_str": "<id>" } ],
+  "extra": { "now": <ts> },
+  "status_code": 0
+}
+
+// GET /api/download/music → 200
+// Тело — JSON-обёртка с подписанной CDN-ссылкой на mp3 (URL подписан, протухает)
+{ "data": { "play_url": "<signed_cdn_url>", "duration": <sec> }, "status_code": 0 }
+```
+
+### 🔴 Edge-cases — известные ошибочные ответы
+
+Эти ответы возвращаются с `200 OK` (HTTP), но с ненулевым `status_code` или специальным контейнером ошибки. **Всегда проверяй `status_code`, не только HTTP-статус.**
+
+```jsonc
+// GET /api/live/info?roomId=<bad> → 200 + status_code 10011
+// Срабатывает на любых roomId, отличных от свежих/валидных
+{
+  "data": { "message": "Request params error", "prompts": "Request params error" },
+  "extra": { "now": <ts> },
+  "status_code": 10011
+}
+
+// GET /api/effect/info?effectId=<bad> → 200 + status_code 4
+{
+  "log_pb": { "impr_id": "<x>" },
+  "status_code": 4,
+  "status_msg": "Server is currently unavailable. Please try again later."
+}
+
+// GET /api/trending/top-products/detail?Id=<bad>  ИЛИ  /metrics → 200 + code 40000
+{
+  "code": 40000,
+  "msg": "Key: 'GetProductDetailParams.Id' Error:Field validation for 'Id' failed on the 'max' tag",
+  "request_id": "<x>"
+}
+
+// GET /api/user/followings?secUid=<private> → 200 + status_code 3002060
+// Юзер скрыл список подписок — типичный кейс на закрытых аккаунтах
+{
+  "status_code": 3002060,
+  "status_msg": "Profile user is hiding following list",
+  "max_time": 0, "min_time": 0
+}
+```
+
+### 🟡 Пустое тело — 204 No Content
+
+Несколько эндпоинтов на пустых/удалённых данных возвращают **204 без body**. Не путай с 200+пустой объект — это разные сценарии.
+
+```http
+GET /api/download/video?url=<url-without-video>
+HTTP/1.1 204 No Content
+
+GET /api/user/liked-posts?secUid=<private-user>
+HTTP/1.1 204 No Content
+```
+
+→ Парсер должен явно проверять `status == 204` и не пытаться `.json()`.
+
+### ⛔ 401 — endpoint disabled на Basic-подписке
+
+```http
+GET /api/trending/ads
+GET /api/trending/keyword/posts
+HTTP/1.1 401
+{"message": "This endpoint is disabled for your subscription"}
+```
+
+→ Эти эндпоинты требуют **Custom plan** (provider-side, договариваться с провайдером). Basic/Pro/Ultra/Mega не дают доступа.
+
+### Полный список эндпоинтов и форма ответа
+
+| Path | Источник верификации | Тип ответа |
+|---|---|---|
+| `/api/post/trending` | real call | `itemList[]` обёртка |
+| `/api/post/{detail,related,etc}` | playground | Aweme |
+| `/api/user/{info,posts,reposts}` | playground | userInfo + itemList |
+| `/api/user/followings` (private) | real call | `status_code 3002060` |
+| `/api/user/liked-posts` (private) | real call | `204` |
+| `/api/search/{video,user,music,...}` | playground+real | `itemList` обёртка |
+| `/api/collection/{info,posts}` | real call | `itemList` обёртка |
+| `/api/live/check-alive` | real call | `data[].alive` |
+| `/api/live/info` (bad roomId) | real call | `status_code 10011` |
+| `/api/effect/info` (bad effectId) | real call | `status_code 4` |
+| `/api/trending/top-products/{detail,metrics}` | real call | `code 40000` без валидного product Id |
+| `/api/trending/ads`, `/api/trending/keyword/posts` | real call | **401 disabled** |
+| `/api/download/video` (no-video URL) | real call | `204` |
+| `/api/download/music` | real call | `data.play_url` |
+
+> 📝 Захвачены 56 ответов 2026-04-28 на боевом ключе подписки Basic. Полные тела (с подписанными CDN-URL замаскированными как `<x>`) — в репозитории истории конверсаций (см. `docs/methodology/`).

@@ -360,6 +360,12 @@ def paginate(path, params, max_pages=10):
 
 **Пример ответа**: структура аналогична `/api/post/detail`, но в `edges` лежат комментарии (не оригинальный пост).
 
+> ⚠️ **Edge-case (verified 2026-04-28):** при некорректном или несуществующем `post_id` API возвращает `200 OK` с GraphQL-ошибкой:
+> ```json
+> {"errors":[{"message":"execution error","path":["data"],"severity":"CRITICAL"}],"data":null,"extensions":{"is_final":true,"server_metadata":{...}},"status":"ok"}
+> ```
+> Всегда проверяй `data !== null` перед обработкой.
+
 ---
 
 ## Search (3 эндпоинта)

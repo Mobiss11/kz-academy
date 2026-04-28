@@ -1047,7 +1047,36 @@ Continuation tokens бывают по 2-3 КБ. Решения:
 
 ### Provider не положил Example Response
 
-Несколько эндпоинтов в playground не имеют примера ответа: `/subtitles`, `/subtitle`, `/updated_metadata`, `/post/comments`. Их форму описаны в этой карточке по смыслу — сверяйся в RapidAPI Discussions если что-то не сходится.
+Несколько эндпоинтов в playground не имеют примера ответа: `/subtitles`, `/subtitle`, `/updated_metadata`, `/post/comments`. Все четыре прозвонены реальными запросами 2026-04-28 на Basic-плане:
+
+```jsonc
+// GET /subtitle?url=<vtt_or_srt_url> → 200
+// Возвращает текст субтитра в SRT-формате (Content-Type: text/plain), НЕ JSON
+// 1
+// 00:00:01,360 --> 00:00:03,040
+// [♪♪♪]
+//
+// 2
+// 00:00:18,640 --> 00:00:21,880
+// ♪ We're no strangers to love ♪
+// ...
+
+// GET /subtitles?id=<videoId> → 200 (JSON-список доступных дорожек)
+// { "subtitles": [ { "languageCode": "en", "languageName": "English", "url": "<vtt_url>", "isTranslatable": true }, ... ] }
+
+// GET /updated_metadata?id=dQw4w9WgXcQ → 200
+{
+  "id": "dQw4w9WgXcQ",
+  "viewCountText": "1,766,811,412 views",
+  "viewCount": "1766811412",
+  "likeCountText": "18M",
+  "likeCount": 18983304
+}
+
+// GET /post/comments?id=<post_id> → 200 + retry-marker
+// При первом вызове возвращает {"error":"Retry","code":"403"} — провайдер ретраит на их стороне.
+// Делай retry с экспоненциальной паузой; обычно 2-3 повтора достаточно.
+```
 
 ---
 

@@ -10,9 +10,9 @@
 
 API для парсинга **Instagram**: профили, посты, рилсы, репосты, отмеченные медиа, хэштеги, локации, исследовательская лента (Explore), глобальный поиск, утилиты конвертации username/userId/mediaURL/shortcode. **30 эндпоинтов** (все GET) в 7 группах.
 
-> ✅ **Источник схемы.** Карточка собрана из RapidAPI Playground (path + method + params всех 30 эндпоинтов). Тарифы и формат 401 — verified живым вызовом. JSON-структуры ответов не дёрнуты по эндпоинт — провайдер использует относительно стандартный Instagram API схему (см. секцию "Внутренний формат").
+> ✅ **Источник схемы.** Все **30 эндпоинтов** провалидированы реальными API-вызовами на Basic-плане (2026-04-28). Тарифы, формат 401 и форма ответа — verified живыми запросами. Точные ключи верхнего уровня по каждому эндпоинту см. в секции "Verified response shapes" в конце карточки.
 >
-> Перед прод-кодом сверяйся с playground.
+> Провайдер не заполнил Example Responses в Playground для этого API — поэтому сверяйся либо с этой карточкой, либо делай свой запрос на Basic ($0).
 
 ## Авторизация
 
@@ -567,3 +567,259 @@ Rate: 500/5min = 1.67 req/sec → норм для всех планов
 - **Instagram Graph API** (https://developers.facebook.com/docs/instagram-api) — официальный, бесплатный, но только для Business/Creator аккаунтов с OAuth.
 - **Instagram Basic Display API** — для обычных юзеров с OAuth, ограничено собственными данными.
 - Этот RapidAPI-коннектор — только публичные данные, без OAuth, но с риском ToS-нарушения при массовом использовании.
+
+---
+
+## Verified response shapes (2026-04-28)
+
+> ✅ Все 30 эндпоинтов прошуршаны реальными API-вызовами на Basic-плане. Ниже — top-level ключи каждого ответа. Это «контракт минимум» — реальные ответы могут содержать больше вложенных полей, но top-level всегда такой.
+
+### 🧩 Identity Utilities
+
+```jsonc
+// GET /id?username=zuck → 200
+{ "status": true, "username": "zuck", "user_id": "314216", "attempts": "3" }
+
+// GET /id?id=314216 → 200
+{ "status": true, "username": "zuck", "user_id": "314216", "attempts": "10" }
+
+// GET /id-media?id=<media_id>  ИЛИ  /id-media?url=<post_url> → 200
+{ "status": true, "shortcode": "DWuq1e1D1E6", "media_id": "<numeric_id>" }
+```
+
+### 👤 User Insights
+
+```jsonc
+// GET /profile?username=zuck (или ?id=314216) → 200 — самая полная "сырая" схема
+// Top-level keys (62):
+{
+  "status": true,
+  "ai_agent_owner_username": null,
+  "biography": "I build stuff",
+  "bio_links": [],
+  "fb_profile_biolink": null,
+  "biography_with_entities": { "raw_text": "...", "entities": [] },
+  "blocked_by_viewer": false,
+  "restricted_by_viewer": null,
+  "country_block": false,
+  "eimu_id": "<id>",
+  "external_url": null,
+  "external_url_linkshimmed": null,
+  "edge_followed_by": { "count": 14000000 },
+  "fbid": "<id>",
+  "followed_by_viewer": false,
+  "edge_follow": { "count": 600 },
+  "follows_viewer": false,
+  "full_name": "Mark Zuckerberg",
+  "group_metadata": null,
+  "has_ar_effects": false,
+  "has_clips": true,
+  "has_guides": false,
+  "has_channel": false,
+  "has_blocked_viewer": false,
+  "highlight_reel_count": 35,
+  "has_onboarded_to_text_post_app": true,
+  "has_requested_viewer": false,
+  "hide_like_and_view_counts": false,
+  "id": "314216",
+  "is_business_account": false,
+  "is_professional_account": true,
+  "is_supervision_enabled": false,
+  "is_guardian_of_viewer": false,
+  "is_supervised_by_viewer": false,
+  "is_supervised_user": false,
+  "is_embeds_disabled": false,
+  "is_joined_recently": false,
+  "guardian_id": null,
+  "business_address_json": null,
+  "business_contact_method": "UNKNOWN",
+  "business_email": null,
+  "business_phone_number": null,
+  "business_category_name": null,
+  "overall_category_name": null,
+  "category_enum": null,
+  "category_name": "Personal Blog",
+  "is_private": false,
+  "is_verified": true,
+  "is_verified_by_mv4b": false,
+  "is_regulated_c18": false,
+  "pinned_channels_list_count": 0,
+  "profile_pic_url": "<signed_cdn_url>",
+  "profile_pic_url_hd": "<signed_cdn_url>",
+  "requested_by_viewer": false,
+  "should_show_category": true,
+  "should_show_public_contacts": false,
+  "show_account_transparency_details": true,
+  "show_text_post_app_badge": null,
+  "remove_message_entrypoint": false,
+  "transparency_label": null,
+  "transparency_product": null,
+  "username": "zuck",
+  "edge_owner_to_timeline_media": { "count": 312, "edges": [...] }
+}
+
+// GET /profile2?username=zuck (или ?id=314216) → 200 — V2-схема, ближе к internal IG mobile API
+// Top-level keys (60):
+{
+  "status": true,
+  "fbid_v2": "<id>",
+  "is_memorialized": false, "is_private": false, "has_story_archive": null,
+  "is_coppa_enforced": null, "supervision_info": null,
+  "is_regulated_c18": false, "regulated_news_in_locations": null,
+  "bio_links": [],
+  "linked_fb_info": null,
+  "text_post_app_badge_label": null, "show_text_post_app_badge": null,
+  "username": "zuck", "pk": "314216",
+  "live_broadcast_visibility": 0, "live_broadcast_id": null,
+  "profile_pic_url": "<signed_cdn_url>",
+  "hd_profile_pic_url_info": { "url": "...", "width": 1080, "height": 1080 },
+  "is_unpublished": false, "latest_reel_media": 0, "has_profile_pic": true,
+  "profile_pic_genai_tool_info": [],
+  "biography": "I build stuff", "full_name": "Mark Zuckerberg",
+  "is_verified": true, "show_account_transparency_details": true,
+  "account_type": 3,
+  "follower_count": 14000000, "mutual_followers_count": 0,
+  "profile_context_links_with_user_ids": [], "profile_context_facepile_users": [],
+  "address_street": "", "city_name": "", "is_business": false, "zip": "",
+  "biography_with_entities": { "entities": [] },
+  "category": "Personal Blog", "should_show_category": true,
+  "is_ring_creator": false, "show_ring_award": false, "ring_creator_metadata": null,
+  "account_badges": [],
+  "external_lynx_url": null, "external_url": null,
+  "transparency_label": null, "transparency_product": null,
+  "hide_creator_marketplace_badge": false,
+  "id": "314216",
+  "has_chaining": true, "remove_message_entrypoint": false,
+  "is_embeds_disabled": false, "is_cannes": false,
+  "is_professional_account": true, "following_count": 600,
+  "media_count": 312, "total_clips_count": 50,
+  "has_visible_media_notes": false,
+  "latest_besties_reel_media": 0, "reel_media_seen_timestamp": 0,
+  "attempts": "1"
+}
+
+// GET /web-profile?username=zuck → 200 — это "сырой" GraphQL ответ, обёрнутый в data
+{ "data": { "user": { /* почти то же что /profile, в обёртке */ } } }
+
+// GET /user-feeds?id=314216&count=30 → 200
+{ "more_available": true, "items": [ /* IG Media-объекты */ ], "next_max_id": "..." }
+
+// GET /user-feeds2?id=314216&count=30 → 200
+{ "data": { "user": { "edge_owner_to_timeline_media": { "edges": [...], "page_info": { "end_cursor": "...", "has_next_page": true } } } } }
+
+// GET /reels?id=314216&count=30 → 200
+{ "items": [ /* Reels Media */ ] }
+
+// GET /user-reposts?id=314216 → 200
+{ "more_available": true, "items": [...] }
+
+// GET /user-tags?id=314216&count=30 → 200
+{ "data": { "user": { "edge_user_to_photos_of_you": { "edges": [...], "page_info": { "end_cursor": "...", "has_next_page": true } } } } }
+
+// GET /related-profiles?id=314216 → 200
+{ "data": { "user": { "edge_related_profiles": { "edges": [...] } } }, "status": true, "attempts": "1" }
+```
+
+### 📸 Media Details
+
+```jsonc
+// GET /post?url=<post_url> ИЛИ ?id=<media_id> → 200 — top-level keys (22):
+{
+  "status": true,
+  "__typename": "GraphSidecar",  // или "GraphImage", "GraphVideo"
+  "id": "<media_id>",
+  "shortcode": "DWuq1e1D1E6",
+  "thumbnail_src": "<signed_cdn_url>",
+  "dimensions": { "height": 1350, "width": 1080 },
+  "gating_info": null,
+  "fact_check_overall_rating": null, "fact_check_information": null,
+  "sensitivity_friction_info": null, "sharing_friction_info": { "should_have_sharing_friction": false },
+  "media_overlay_info": null, "media_preview": "...",
+  "display_url": "<signed_cdn_url>",
+  "display_resources": [ {"src": "...", "config_width": 640, "config_height": 800}, ... ],
+  "is_video": false, "tracking_token": "<x>",
+  "upcoming_event": null,
+  "edge_media_to_tagged_user": { "edges": [] },
+  "owner": { "id": "...", "username": "...", "is_verified": true },
+  "accessibility_caption": null,
+  "edge_sidecar_to_children": { "edges": [...] }   // только для Sidecar
+}
+
+// GET /post-dl?url=<post_url> → 200
+{ "data": { "video_url": "...", "image_url": "...", "carousel": [...] }, "status": true, "attempts": "1" }
+
+// GET /music?id=<music_id>&max_id=... → 200
+{ /* зависит от наличия данных; если ничего нет — { "attempts": "..." } */ }
+```
+
+### 🔖 Hashtag Lookup
+
+```jsonc
+// GET /tag-feeds?query=travel → 200
+{ "data": { "hashtag": { "edge_hashtag_to_media": { "edges": [...], "page_info": { "end_cursor": "...", "has_next_page": true } } } } }
+```
+
+### 🗺️ Location Data
+
+```jsonc
+// GET /location-info?id=212988663 → 200
+{
+  "location_info": {
+    "category": "Government organization",
+    "hours": { "status": "" },
+    "ig_business": { "profile": "null" },
+    "lat": 40.7142, "lng": -74.0064,
+    "location_address": "", "location_city": "", "location_zip": "",
+    "location_id": "212988663",
+    "media_count": 82334189,
+    "name": "New York, New York",
+    "phone": "", "price_range": 3,
+    "slug": "new-york-new-york"
+  },
+  "attempts": "10"
+}
+
+// GET /location-feeds?id=212988663&tab=top → 200
+{ "edges": [ { "node": { "code": "...", "pk": "...", "id": "..._<owner_id>", /* IG Media поля */ } }, ... ] }
+
+// GET /cities?country_code=US → 200
+{
+  "country_info": { "id": "US", "name": "United States", "slug": "united-states" },
+  "city_list": [ { "id": "c2753900", "name": "...", "slug": "..." }, ... ]
+}
+
+// GET /locations?city_id=c2753900 → 200
+{
+  "country_info": { "id": "US", ... },
+  "city_info": { "id": "c2753900", "name": "...", "slug": "..." },
+  "location_list": [ { "id": "372247132", "name": "...", "slug": "..." }, ... ]
+}
+```
+
+### 🔍 Explore Feed
+
+```jsonc
+// GET /sections → 200
+{ "sections": [ { /* explore category */ }, ... ] }
+
+// GET /section?id=<section_id>&count=30 → 200
+{ "section_name": "...", "max_id": "...", "more_available": true, "items": [...] }
+```
+
+### 🌐 Search (4 формы)
+
+```jsonc
+// GET /search?query=tesla&select=users → 200
+{ "status": true, "users": [ { "user": { "pk": "...", "username": "...", ... } }, ... ] }
+
+// GET /search?query=tesla&select=hashtags → 200
+{ "status": true, "hashtags": [ { "name": "...", "media_count": ..., "id": "..." }, ... ] }
+
+// GET /search?query=berlin&select=locations → 200
+{ "status": true, "places": [ { "place": { "location": { "pk": "...", "name": "...", "lat": ..., "lng": ... } } }, ... ] }
+
+// GET /search?query=tesla → 200 (global)
+{ "status": true, "hashtags": [...], "places": [...], "users": [...] }
+```
+
+> 📝 Все 31 запрос (один эндпоинт `/profile2` тестирован дважды — by username и by id, отдают одинаковую структуру) сделаны 2026-04-28 на боевом ключе подписки Basic.
