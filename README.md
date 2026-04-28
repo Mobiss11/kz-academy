@@ -8,28 +8,19 @@
 
 Скилл подключается **к твоему ИИ-ассистенту** (Claude Code, Cursor, ChatGPT и т.д.) и даёт ему структурированные знания про коннекторы соцсетей и контент-завод. Без скилла нейронка галлюцинирует имена эндпоинтов и параметров. Со скиллом — даёт точный код.
 
-### Шаг 1. Клонируй репо
+**Найди свой инструмент в таблице — скопируй команду — скилл подключён.** Никакого "сначала склонируй, потом разберись" — каждый блок самодостаточен.
 
-```bash
-git clone https://github.com/Mobiss11/kz-academy.git
-cd kz-academy
-```
-
-> 💡 Не пользуешься git? → **Code → Download ZIP** на странице репо, распакуй и работай с папкой.
-
-### Шаг 2. Подключи к своему ИИ — выбери свой инструмент
-
-| Твой инструмент | Что делать | Подробно |
+| Инструмент | Команда / шаги | Подробно |
 |---|---|---|
-| **🟣 Claude Code** (CLI) | `cp -R . ~/.claude/skills/kz-academy/` — Claude сам подхватит скилл по `description` | [installation-claude-code.md](docs/installation-claude-code.md) |
-| **🔵 Cursor** | Создать `.cursor/rules/kz-academy.mdc` со ссылкой на этот клон | [installation-cursor.md](docs/installation-cursor.md) |
-| **🟢 Claude Desktop / Continue / Cline** (через MCP) | Запустить `python -m scripts.mcp_server` и добавить в config клиента | [installation-mcp.md](docs/installation-mcp.md) |
-| **🟡 Claude.ai (web)** | Загрузить `SKILL.md` + нужные карточки в Project knowledge | [installation-claude-ai.md](docs/installation-claude-ai.md) |
-| **🟡 ChatGPT (Plus/Team)** | Загрузить файлы в Project / Custom GPT knowledge | [installation-chatgpt.md](docs/installation-chatgpt.md) |
-| **⚙️ Свой бот через Anthropic/OpenAI SDK** | Подгружать `SKILL.md` + карточки в system prompt программно (с prompt caching!) | [installation-via-api.md](docs/installation-via-api.md) |
-| **⚪ Любой generic LLM** (Gemini, Llama, DeepSeek...) | `python scripts/bundle.py > bundle.md` — вставить в system prompt чата | [installation-generic-llm.md](docs/installation-generic-llm.md) |
+| **🟣 Claude Code** (CLI) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git \\<br>  ~/.claude/skills/kz-academy</code></pre> Claude сам подхватит скилл по `description`. | [installation-claude-code.md](docs/installation-claude-code.md) |
+| **🔵 Cursor** | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git ~/kz-academy</code></pre> Затем создай в твоём проекте `.cursor/rules/kz-academy.mdc` со ссылками `@~/kz-academy/SKILL.md` и `@~/kz-academy/connectors/`. | [installation-cursor.md](docs/installation-cursor.md) |
+| **🟢 Claude Desktop / Continue / Cline** (через MCP) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy && pip install "mcp[cli]>=1.0"</code></pre> Затем добавь блок MCP-сервера в config клиента (см. подробно). | [installation-mcp.md](docs/installation-mcp.md) |
+| **🟡 Claude.ai (web)** | Скачай нужные файлы (Code → Download ZIP) → распакуй → загрузи `SKILL.md` + карточки нужных коннекторов в **Project knowledge**. Клон не нужен. | [installation-claude-ai.md](docs/installation-claude-ai.md) |
+| **🟡 ChatGPT (Plus/Team)** | Скачай ZIP → загрузи `SKILL.md` + карточки в **Project / Custom GPT knowledge**. Клон не нужен. | [installation-chatgpt.md](docs/installation-chatgpt.md) |
+| **⚙️ Свой бот через Anthropic/OpenAI SDK** | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy</code></pre> Подгружай `SKILL.md` + карточки в system prompt программно (с prompt caching!). | [installation-via-api.md](docs/installation-via-api.md) |
+| **⚪ Любой generic LLM** (Gemini, Llama, DeepSeek...) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy<br>python scripts/bundle.py > bundle.md</code></pre> Вставь `bundle.md` в начало чата или в system prompt. | [installation-generic-llm.md](docs/installation-generic-llm.md) |
 
-### Шаг 3. Проверь что AI видит скилл
+### Проверь что AI видит скилл
 
 Спроси у нейронки:
 
@@ -37,10 +28,13 @@ cd kz-academy
 
 Правильный ответ упомянет конкретные эндпоинты вроде `/api/download/video`, `/api/download/music`, `/api/download/user/video` — это значит ИИ прочитал [connectors/tiktok-api23.md](connectors/tiktok-api23.md). Если нейронка отвечает общими словами — что-то с подключением, перечитай инструкцию для своего инструмента.
 
-### Шаг 4. (Опционально) Установи Python-зависимости для запуска готовых примеров
+### (Опционально) Если будешь запускать готовые Python-примеры
+
+Только если решил пробовать примеры из `examples/` локально:
 
 ```bash
-cp .env.example .env  # вписать ключи (минимум RAPIDAPI_KEY)
+cd kz-academy            # туда куда склонировал
+cp .env.example .env     # вписать ключи (минимум RAPIDAPI_KEY)
 pip install -e .
 python scripts/check_env.py  # smoke-test всех настроенных сервисов
 ```
