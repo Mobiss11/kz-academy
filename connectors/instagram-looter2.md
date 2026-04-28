@@ -1,0 +1,569 @@
+# Instagram Looter (irrors-apis)
+
+**Провайдер:** irrors-apis
+**Страница:** https://rapidapi.com/irrors-apis/api/instagram-looter2
+**Subscribe (Pricing):** https://rapidapi.com/irrors-apis/api/instagram-looter2/pricing
+**Base URL:** `https://instagram-looter2.p.rapidapi.com`
+**Host-заголовок:** `instagram-looter2.p.rapidapi.com`
+
+> ⚠️ **Перед первым запросом — оформи подписку** на странице Pricing. Без подписки любой вызов вернёт `403`. Free-план — **Basic** (150 req/мес), **требует привязанную карту**. Pro и Basic — оба hard limit, без overage. Подробности в [docs/getting-started.md](../docs/getting-started.md).
+
+API для парсинга **Instagram**: профили, посты, рилсы, репосты, отмеченные медиа, хэштеги, локации, исследовательская лента (Explore), глобальный поиск, утилиты конвертации username/userId/mediaURL/shortcode. **30 эндпоинтов** (все GET) в 7 группах.
+
+> ✅ **Источник схемы.** Карточка собрана из RapidAPI Playground (path + method + params всех 30 эндпоинтов). Тарифы и формат 401 — verified живым вызовом. JSON-структуры ответов не дёрнуты по эндпоинт — провайдер использует относительно стандартный Instagram API схему (см. секцию "Внутренний формат").
+>
+> Перед прод-кодом сверяйся с playground.
+
+## Авторизация
+
+```
+X-RapidAPI-Key: <ключ>
+X-RapidAPI-Host: instagram-looter2.p.rapidapi.com
+```
+
+**Формат ошибки 401** (verified):
+
+```http
+HTTP/1.1 401 Unauthorized
+{"message": "Invalid API key. Go to https://docs.rapidapi.com/docs/keys for more info."}
+```
+
+## Общие правила
+
+### Идентификаторы Instagram
+
+Этот API использует все основные идентификаторы Instagram:
+
+- **`username`** — handle без `@` (`zuck`, `cristiano`).
+- **`id`** / **`userId`** — числовая строка (стабильный internal user ID).
+- **`shortcode`** — буквенно-цифровой код поста из URL (`Cv1AbcXXXX` из `instagram.com/p/Cv1AbcXXXX/`).
+- **`media id`** — числовой ID поста (внутренний).
+- **`location id`** — числовой ID локации.
+- **`city_id`** — внутренний ID города (для локационной иерархии).
+
+Стандартный flow для пользователя:
+```
+username → /id → userId → /profile или /user-feeds → ...
+```
+
+И для поста:
+```
+URL поста → /id-media → media_id → /post → детали
+```
+
+### Параметр `fields` — бесплатная экономия bandwidth
+
+**Все 30 эндпоинтов** принимают опциональный параметр `fields` для сокращения размера ответа:
+
+```python
+params = {"username": "zuck", "fields": "id,username,full_name,follower_count"}
+```
+
+Возвращаются только запрошенные поля. Не влияет на квоту, но **сильно сокращает bandwidth** — главное оружие в этом коннекторе. Используй везде.
+
+### Пагинация (3 разных стиля)
+
+Этот API использует разные курсоры в разных группах:
+
+| Эндпоинты | Курсор | Заметка |
+|---|---|---|
+| `/user-feeds`, `/reels`, `/user-reposts`, `/section`, `/music` | `max_id` | string ID последнего элемента |
+| `/user-feeds2`, `/user-tags`, `/tag-feeds`, `/location-feeds` | `end_cursor` | стандартный Instagram-курсор |
+| `/cities`, `/locations` | `page` | пагинация по номеру страницы |
+
+В response поля называются так же. Если не получил — страниц больше нет.
+
+### Универсальный `/search` — 4 разных поведения
+
+**Внимание:** есть 4 разных эндпоинта по пути `/search`:
+
+| Контекст | `select` | Что возвращает |
+|---|---|---|
+| Search users by keyword | `users` | поиск пользователей |
+| Search hashtags by keyword | `hashtags` | поиск хэштегов |
+| Search locations by keyword | `locations` | поиск локаций |
+| Global search | (нет, только `query`) | смешанная выдача |
+
+`select` — обязательный параметр для трёх первых. Без `select` (только `query`) — это Global search.
+
+### Внутренний формат ответов
+
+Использует Instagram API структуру. Видео/посты следуют схеме `Media` (`Item`):
+
+```json
+{
+  "id": "12345_67890",
+  "shortcode": "Cv1AbcXXXX",
+  "taken_at": 1700000000,
+  "media_type": 1,
+  "caption": {"text": "..."},
+  "image_versions2": {"candidates": [{"url": "...", "width": 1080, "height": 1080}]},
+  "video_versions": [{"url": "...", "width": 720, "height": 1280}],
+  "user": {"pk": "...", "username": "...", "full_name": "...", "is_verified": false},
+  "like_count": 123,
+  "comment_count": 45,
+  "play_count": 1000,
+  "carousel_media": [...]
+}
+```
+
+`media_type`: 1 = фото, 2 = видео/рилс, 8 = карусель (несколько медиа в `carousel_media`).
+
+---
+
+## Эндпоинты (30)
+
+### 🧩 Identity Utilities (4)
+
+Утилиты конвертации между разными идентификаторами Instagram.
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Username from user ID | `/id` | ✅ `id`, – `fields` |
+| User ID from username | `/id` | ✅ `username`, – `fields` |
+| Media shortcode from media ID | `/id-media` | ✅ `id`, – `fields` |
+| Media ID from media URL | `/id-media` | ✅ `url`, – `fields` |
+
+> 💡 Это самые **дешёвые** и быстрые эндпоинты — каждый = 1 unit. Кэшируй результаты **навсегда** (детерминированные конвертеры).
+
+### 👤 User Insights (12)
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| User info by username | `/profile` | ✅ `username`, – `fields` |
+| User info (V2) by username | `/profile2` | ✅ `username`, – `fields` |
+| User info by user ID | `/profile` | ✅ `id`, – `fields` |
+| User info (V2) by user ID | `/profile2` | ✅ `id`, – `fields` |
+| Web profile info by username | `/web-profile` | ✅ `username`, – `fields` |
+| Media list by user ID | `/user-feeds` | ✅ `id`, ✅ `count`, – `allow_restricted_media`, – `max_id`, – `fields` |
+| Media list (V2) by user ID | `/user-feeds2` | ✅ `id`, ✅ `count`, – `end_cursor`, – `fields` |
+| Reels by user ID | `/reels` | ✅ `id`, ✅ `count`, – `max_id`, – `fields` |
+| Reposts by user ID | `/user-reposts` | ✅ `id`, – `max_id`, – `fields` |
+| Tagged media by user ID | `/user-tags` | ✅ `id`, ✅ `count`, – `end_cursor`, – `fields` |
+| Related profiles by user ID | `/related-profiles` | ✅ `id`, – `fields` |
+| Search users by keyword | `/search` | ✅ `query`, ✅ `select=users`, – `fields` |
+
+> 💡 **Когда какую версию выбрать:**
+> - `/profile` — базовая инфа (имя, био, follower_count, аватар).
+> - `/profile2` — расширенная (то же + business info, contact, более глубокие поля).
+> - `/web-profile` — сырой JSON, который Instagram отдаёт на странице профиля. Самый детальный, но и самый "сырой".
+> - `/user-feeds` vs `/user-feeds2` — разная пагинация (`max_id` vs `end_cursor`). V2 обычно стабильнее.
+
+### 📸 Media Details (4)
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Media info by URL | `/post` | ✅ `url`, – `fields` |
+| Media info by ID | `/post` | ✅ `id`, – `fields` |
+| Download link by media ID or URL | `/post-dl` | ✅ `url`, – `fields` |
+| Music info by music ID | `/music` | ✅ `id`, – `max_id`, – `fields` |
+
+`/post` принимает `url` ИЛИ `id` — один из. `/post-dl` отдаёт прямые ссылки на видео/фото.
+
+### 🔖 Hashtag Lookup (2)
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Media by hashtag | `/tag-feeds` | ✅ `query` (без `#`), – `end_cursor`, – `fields` |
+| Search hashtags by keyword | `/search` | ✅ `query`, ✅ `select=hashtags`, – `fields` |
+
+### 🗺️ Location Data (5)
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Search locations by keyword | `/search` | ✅ `query`, ✅ `select=locations`, – `fields` |
+| Location info by location ID | `/location-info` | ✅ `id`, – `fields` |
+| Media by location ID | `/location-feeds` | ✅ `id`, ✅ `tab`, – `ranked`, – `end_cursor`, – `fields` |
+| Cities by country code | `/cities` | ✅ `country_code` (ISO `US`, `RU`...), – `page`, – `fields` |
+| Locations by city ID | `/locations` | ✅ `city_id`, – `page`, – `fields` |
+
+`/location-feeds` параметр `tab`: `recent` (свежее) или `top` (топ). `ranked` — bool флаг для альтернативной сортировки.
+
+### 🔍 Explore Feed (2)
+
+Лента "Интересное" (Explore) Instagram, разбита на категории.
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Explore sections list | `/sections` | – `fields` (без обязательных) |
+| Media by explore section ID | `/section` | ✅ `id`, ✅ `count`, – `max_id`, – `fields` |
+
+Сначала `/sections` для списка категорий, потом `/section?id=<categoryId>` для контента.
+
+### 🌐 Global Search (1)
+
+| Эндпоинт | Path | Параметры |
+|---|---|---|
+| Global search by keyword | `/search` | ✅ `query`, – `fields` |
+
+Без `select` параметра — смешанная выдача (юзеры + хэштеги + локации).
+
+---
+
+## Минимальные рабочие примеры
+
+### username → user_id → последние посты
+
+```python
+import os, requests
+
+API_KEY = os.environ["RAPIDAPI_KEY"]
+HOST = "instagram-looter2.p.rapidapi.com"
+headers = {"X-RapidAPI-Key": API_KEY, "X-RapidAPI-Host": HOST}
+
+# 1. Конвертируем username в id
+r1 = requests.get(f"https://{HOST}/id",
+                  headers=headers, params={"username": "zuck"}).json()
+user_id = r1.get("id") or r1.get("user_id")
+
+# 2. Получаем профиль
+profile = requests.get(f"https://{HOST}/profile2",
+                       headers=headers,
+                       params={"id": user_id, "fields": "username,full_name,follower_count,is_verified"}).json()
+print(f"{profile['full_name']} ({profile['follower_count']:,} followers)")
+
+# 3. Последние 30 постов (V2 — стабильнее)
+posts = requests.get(f"https://{HOST}/user-feeds2",
+                     headers=headers,
+                     params={"id": user_id, "count": 30}).json()
+for m in posts.get("items", []):
+    cap = (m.get("caption") or {}).get("text", "")
+    print(f"#{m['id']} likes={m.get('like_count',0)} — {cap[:80]}")
+```
+
+### Пагинация через end_cursor (V2 endpoints)
+
+```python
+def get_all_posts_v2(user_id, max_pages=10):
+    end_cursor = None
+    for _ in range(max_pages):
+        params = {"id": user_id, "count": 30}
+        if end_cursor:
+            params["end_cursor"] = end_cursor
+        r = requests.get(f"https://{HOST}/user-feeds2",
+                         headers=headers, params=params, timeout=15).json()
+        for item in r.get("items", []):
+            yield item
+        end_cursor = r.get("end_cursor") or r.get("next_max_id")
+        if not end_cursor:
+            break
+```
+
+### Пагинация через max_id (V1)
+
+```python
+def get_all_reels(user_id, max_pages=10):
+    max_id = None
+    for _ in range(max_pages):
+        params = {"id": user_id, "count": 30}
+        if max_id:
+            params["max_id"] = max_id
+        r = requests.get(f"https://{HOST}/reels",
+                         headers=headers, params=params, timeout=15).json()
+        for item in r.get("items", []):
+            yield item
+        max_id = r.get("next_max_id") or r.get("max_id")
+        if not max_id:
+            break
+```
+
+### URL поста → детали → скачать
+
+```python
+url = "https://www.instagram.com/p/Cv1AbcXXXX/"
+
+# Прямые ссылки на медиа
+dl = requests.get(f"https://{HOST}/post-dl",
+                  headers=headers, params={"url": url}).json()
+# обычно содержит "video_url" или "image_url" или "carousel" массив
+
+# Полные метаданные
+info = requests.get(f"https://{HOST}/post",
+                    headers=headers, params={"url": url}).json()
+print(f"likes={info.get('like_count')} comments={info.get('comment_count')}")
+```
+
+### Универсальный поиск через `/search`
+
+```python
+# Юзеры
+users = requests.get(f"https://{HOST}/search",
+                     headers=headers, params={"query": "tesla", "select": "users"}).json()
+
+# Хэштеги
+tags = requests.get(f"https://{HOST}/search",
+                    headers=headers, params={"query": "tesla", "select": "hashtags"}).json()
+
+# Локации
+locations = requests.get(f"https://{HOST}/search",
+                         headers=headers, params={"query": "berlin", "select": "locations"}).json()
+
+# Глобально (всё сразу)
+mixed = requests.get(f"https://{HOST}/search",
+                     headers=headers, params={"query": "tesla"}).json()
+```
+
+### Локационная иерархия: страна → город → локации → посты
+
+```python
+# 1. Города России
+cities = requests.get(f"https://{HOST}/cities",
+                      headers=headers, params={"country_code": "RU"}).json()
+
+# 2. Локации в Москве (берём первый city из cities)
+city_id = cities["data"][0]["id"]
+locs = requests.get(f"https://{HOST}/locations",
+                    headers=headers, params={"city_id": city_id}).json()
+
+# 3. Посты в локации (берём первую)
+loc_id = locs["data"][0]["id"]
+feed = requests.get(f"https://{HOST}/location-feeds",
+                    headers=headers, params={"id": loc_id, "tab": "top"}).json()
+
+for item in feed.get("items", []):
+    print(item["id"], item.get("caption", {}).get("text", "")[:80])
+```
+
+### Выгрузка с минимальным bandwidth через fields
+
+```python
+# Запросить только нужные поля — экономия 80-90% размера ответа
+r = requests.get(f"https://{HOST}/user-feeds2",
+                 headers=headers,
+                 params={"id": user_id, "count": 30,
+                         "fields": "items.id,items.caption.text,items.like_count,items.taken_at"}).json()
+```
+
+---
+
+## Типичные проблемы
+
+### `HTTP 401 {"message": "Invalid API key. ..."}` (verified)
+
+Невалидный или отсутствующий `X-RapidAPI-Key`.
+
+### `200 OK` с пустым ответом
+
+- Юзер приватный — посты не отдаются.
+- Юзер удалён или забанен Instagram.
+- Невалидный `id` (часто — забыл прогнать username через `/id`).
+- Гео-блокировка (Instagram CDN).
+
+### `next_max_id` vs `end_cursor` — разные поля в разных версиях
+
+- V1 (`/user-feeds`, `/reels`) — пагинация по `max_id`, поле в response `next_max_id`.
+- V2 (`/user-feeds2`, `/user-tags`) — пагинация по `end_cursor`, поле в response `end_cursor`.
+
+**Не путай их между эндпоинтами.** Используй маленькие функции под каждый стиль.
+
+### `/search` возвращает пусто без `select`
+
+Без `select` — это global search (смешанная выдача). С `select` — нужно указать одно из `users`/`hashtags`/`locations`. Промежуточные значения не работают.
+
+### Карусели (`media_type: 8`)
+
+Если пост — карусель (несколько фото/видео), реальные медиа лежат в `carousel_media[]`, а не в верхнеуровневых `image_versions2`/`video_versions`. Парсер должен это учитывать:
+
+```python
+def get_media_urls(item):
+    if item.get("media_type") == 8:
+        return [c.get("video_versions") or c.get("image_versions2") for c in item.get("carousel_media", [])]
+    return [item.get("video_versions") or item.get("image_versions2")]
+```
+
+### Истёкшие медиа-URL
+
+`image_versions2.candidates[].url` и `video_versions[].url` подписаны и **протухают** через несколько часов. Не сохраняй надолго — перезапрашивай.
+
+### Rate limit 429
+
+- Basic: 1000/час (но месяц 150 — упрёшься быстрее).
+- Pro: 10 req/sec.
+- Ultra: 30 req/sec.
+- Mega: 60 req/sec.
+
+При превышении — 429.
+
+### `count` — обязательный параметр в нескольких эндпоинтах
+
+В отличие от других API (где `count` опциональный), здесь у `/user-feeds`, `/user-feeds2`, `/reels`, `/user-tags`, `/section` параметр `count` помечен **обязательным**. Без него — ошибка.
+
+---
+
+## Тарифы и расчёт расходов
+
+> 📌 Этот раздел — для AI-ассистента. Когда пользователь спрашивает "сколько это будет стоить?" — используй данные ниже.
+
+### Тарифные планы (verified из Pricing tab, 2026-04-28)
+
+| План | Запросов/мес | Rate Limit | Цена/мес | Overage |
+|------|--------------|------------|----------|---------|
+| **Basic** | 150 | 1000/час | **$0** | **hard limit** → 429 |
+| **Pro** | 15 000 | **10 req/sec** | **$9.90** | **hard limit** → 429 |
+| **Ultra** | 75 000 | **30 req/sec** | **$27.90** | **$0.001** за extra (soft) |
+| **Mega** ⭐ | 250 000 | **60 req/sec** | **$75.90** | **$0.0005** за extra (soft) |
+
+**Bandwidth (на всех планах):** 10 240 MB/мес включено + **$0.001 за каждый дополнительный 1 MB**.
+
+> ⚠️ **Особенности тарифов:**
+>
+> - **Basic И Pro — оба hard limit!** Это редкость. На Pro ($9.90) при превышении 15k req будет 429 без автоплат — задача встанет до начала следующего месяца.
+> - **Ultra/Mega — soft limit с overage**. Если планируешь >15k req/мес — переходи на Ultra сразу, иначе Pro заблокируется.
+> - **Высокий rate-limit на Mega** (60 req/sec) — сильно быстрее других коннекторов в этом репо.
+
+### Стоимость одного запроса в квоте
+
+| Что делает запрос | Стоимость | Пример |
+|---|---|---|
+| **База** (любой GET) | **1 unit** | любой эндпоинт |
+
+У этого коннектора **нет** платных модификаторов. Каждый запрос всегда = 1 unit. `fields` бесплатный (наоборот, экономит bandwidth).
+
+### Формула расчёта месячной стоимости
+
+```
+month_quota_usage = запросов_в_месяц            # 1 unit per request
+month_bandwidth_mb = средний_размер_ответа × запросов_в_месяц
+                    # с fields обычно 1-5 KB на ответ; без fields — 50-200 KB
+
+# Подбор плана:
+if month_quota_usage <= 150:                       plan = Basic ($0)
+elif month_quota_usage <= 15_000 and rate ≤ 10:    plan = Pro ($9.90, hard!)
+elif month_quota_usage <= 75_000 and rate ≤ 30:    plan = Ultra ($27.90)
+elif month_quota_usage <= 250_000 and rate ≤ 60:   plan = Mega ($75.90)
+else: plan = Mega + overage ($0.0005 × extras)
+
+# Bandwidth (если без fields):
+extra_mb = max(0, month_bandwidth_mb - 10240)
+bandwidth_cost = extra_mb × $0.001
+
+total_monthly = plan_price + overage_cost + bandwidth_cost
+```
+
+### Реальные сценарии (сколько это будет стоить)
+
+#### 1. Учебный — 5 профилей разово
+
+```
+5 × (1 /id + 1 /profile2) = 10 запросов разово
+ПЛАН: Basic ($0) — 10 < 150
+ИТОГО: $0
+```
+
+#### 2. Дашборд из 30 профилей раз в час
+
+```
+30 × 24 × 30 = 21 600 req/мес на /profile2
+ПЛАН: Pro ($9.90) — НЕТ, 21.6k > 15k → попадёт в hard limit, оборвёт.
+   → Ultra ($27.90) — единственный нормальный путь.
+   ИЛИ: реже опросы (раз в 2 часа) → 10800 req → Pro подходит.
+ИТОГО: $27.90/мес ИЛИ $9.90 при половинной частоте.
+```
+
+⚠️ **Pro hard limit** — это ловушка: если планируешь чуть больше 15k, переходи сразу на Ultra. Pro $9.90 не подстрахуется автоматически.
+
+#### 3. Скрейпинг 1000 профилей с глубокой выгрузкой постов
+
+```
+1000 × (1 /id + 1 /profile2 + 5 страниц /user-feeds2) = 7000 запросов разово
+ПЛАН: Pro ($9.90) — 7k < 15k. Но если проект регулярный — учти месячный лимит.
+ИТОГО: $9.90 (одна выгрузка); $9.90/мес если делать раз в месяц
+```
+
+#### 4. Мониторинг новых постов 100 авторов каждые 30 минут
+
+```
+100 × 48 × 30 = 144 000 req/мес на /user-feeds2
+Rate: 100/30мин = 0.055 req/sec → влезает в любой план
+ПЛАН: Ultra ($27.90) — 144k < 75k → НЕТ, > 75k.
+   → Mega ($75.90) — 144k < 250k, помещается.
+   ИЛИ: Ultra ($27.90) с overage: 144 000 - 75 000 = 69 000 × $0.001 = $69
+   → Ultra+overage = $96.90 vs Mega = $75.90. **Mega дешевле!**
+ИТОГО: $75.90/мес
+```
+
+⚠️ Точка перехода Ultra→Mega: `($75.90 - $27.90) / $0.001 = 48 000 extras`. Выше 123k req/мес выгоднее Mega.
+
+#### 5. Анализ хэштегов: трекинг 200 хэштегов раз в час
+
+```
+200 × 24 × 30 = 144 000 req/мес на /tag-feeds (та же ситуация что в №4)
+ПЛАН: Mega ($75.90)
+ИТОГО: $75.90/мес
+```
+
+#### 6. Локационный анализ: посты по всем городам страны
+
+```
+1 запрос /cities (получить список) + 100 городов × (1 /locations + 1 /location-feeds × 5 страниц) ≈ 600 запросов разово
+ПЛАН: Pro ($9.90) — 600 < 15k. Хватит надолго.
+ИТОГО: $9.90 (одна выгрузка)
+```
+
+#### 7. Скачивание медиа 50 авторов × 100 постов
+
+```
+ЗАПРОСЫ: 50 × (1 /id + 4 /user-feeds2 + 100 /post-dl) ≈ 5250 запросов разово
+ПЛАН: Pro ($9.90) — 5250 < 15k.
+
+BANDWIDTH:
+  50 × 100 × ~1 MB на пост (метаданные в ответе) = 5 GB → в лимите 10 GB
+  Само скачивание медиа идёт с CDN Instagram (mim Instagram CDN), bandwidth API НЕ учитывается.
+ИТОГО: $9.90 (одна выгрузка)
+```
+
+⚠️ Скачивание медиа из CDN не считается в bandwidth этого API (как с Telegram-channel).
+
+#### 8. Real-time мониторинг 500 авторов каждые 5 минут
+
+```
+500 × 12 × 24 × 30 = 4 320 000 req/мес 😱
+Rate: 500/5min = 1.67 req/sec → норм для всех планов
+
+ПЛАН: Mega ($75.90) — 4.3M > 250k, overage 4.07M × $0.0005 = $2035
+ИТОГО: $75.90 + $2035 = ~$2110/мес 💸
+
+РЕАЛЬНЫЙ ВАРИАНТ: каждые 30 мин → 720 000 req/мес → Mega ($75.90) с overage 470k × $0.0005 = $235
+ИТОГО: $310/мес
+```
+
+⚠️ Real-time на Instagram = очень дорого. Используй максимум опрос раз в 30+ минут с кэшем "последний виденный media_id".
+
+### Чеклист "как сэкономить квоту"
+
+1. **Используй `fields` параметр везде** — экономия 80-90% bandwidth, влияет на overage за MB.
+2. **Кэшируй `/id` и `/id-media` навсегда** — конвертеры детерминированные.
+3. **Кэшируй `/profile2` на сутки** — данные профиля меняются медленно.
+4. **На polling используй `count=30` (макс)** + фильтрация по id, чтобы не перебирать страницы.
+5. **На Pro плане осторожно** — hard limit на 15k. Считай заранее. Переход на Ultra ($27.90) гораздо безопаснее, если есть риск.
+6. **Mega ⭐ дешевле Ultra+overage** при >123k req/мес. Считай по точке перехода.
+7. **`/sections` (Explore list) кэшируй на день** — категории редко меняются.
+8. **Не дёргай Instagram CDN из этого API** — медиа-URL уже в ответе на `/post-dl`, скачивание идёт мимо API bandwidth.
+9. **Throttle на клиенте**: на Pro ~100ms между запросами, Ultra ~33ms, Mega ~17ms.
+10. **Не делай универсальный paginator** — `max_id` (V1) и `end_cursor` (V2) — разные стили. Под каждый эндпоинт свой код.
+
+---
+
+## Что хорошо подходит для учебных проектов
+
+- Анализ профиля автора + последние 30 постов на Basic ($0).
+- Sentiment-анализ caption из 100 постов автора.
+- Сравнение метрик нескольких профилей (`follower_count`, `media_count`).
+- Поиск виральных постов по хэштегу через `/tag-feeds`.
+- Локационный анализ: какие посты популярны в конкретном городе.
+- Граф related-profiles для поиска похожих аккаунтов.
+
+## Что не делать
+
+- **Не игнорировать hard limit на Pro** — превышение = 429 без автоплат, проект встанет до конца месяца. Если объём близок к 15k — берёшь Ultra сразу.
+- **Не путать `id` (числовая строка) и `username`** — большинство feed-эндпоинтов принимают только `id`. Сначала прогоняй username через `/id`.
+- **Не сохранять подписанные media-URL** надолго — они протухают.
+- **Не смешивать `max_id` и `end_cursor`** между эндпоинтами — разные стили.
+- **Не вызывать API из браузера** — ключ утечёт.
+- **Не качать медиа массово** — нарушает ToS Instagram.
+
+## Альтернативы
+
+- **Instagram Graph API** (https://developers.facebook.com/docs/instagram-api) — официальный, бесплатный, но только для Business/Creator аккаунтов с OAuth.
+- **Instagram Basic Display API** — для обычных юзеров с OAuth, ограничено собственными данными.
+- Этот RapidAPI-коннектор — только публичные данные, без OAuth, но с риском ToS-нарушения при массовом использовании.

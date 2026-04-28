@@ -1,0 +1,16 @@
+services:
+  app:
+    build: .
+    image: rapidapi-helper:latest
+    env_file:
+      - .env
+    volumes:
+      - ./examples:/app/examples
+      - ./connectors:/app/connectors
+      - ./scripts:/app/scripts
+      - ./tests:/app/tests
+    working_dir: /app
+    # Пример запуска:
+    #   docker compose run --rm app python -m examples.yt_api.search "claude tutorial"
+    #   docker compose run --rm app pytest
+    command: ["python", "-m", "examples.yt_api.search", "claude api"]
