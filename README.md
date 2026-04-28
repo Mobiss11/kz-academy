@@ -8,17 +8,17 @@
 
 Скилл подключается **к твоему ИИ-ассистенту** (Claude Code, Cursor, ChatGPT и т.д.) и даёт ему структурированные знания про коннекторы соцсетей и контент-завод. Без скилла нейронка галлюцинирует имена эндпоинтов и параметров. Со скиллом — даёт точный код.
 
-**Найди свой инструмент в таблице — скопируй команду — скилл подключён.** Никакого "сначала склонируй, потом разберись" — каждый блок самодостаточен.
+Выбери свой инструмент → перейди по ссылке → там полная инструкция в 1-3 шага.
 
-| Инструмент | Команда / шаги | Подробно |
-|---|---|---|
-| **🟣 Claude Code** (CLI) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git \\<br>  ~/.claude/skills/kz-academy</code></pre> Claude сам подхватит скилл по `description`. | [installation-claude-code.md](docs/installation-claude-code.md) |
-| **🔵 Cursor** | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git ~/kz-academy</code></pre> Затем создай в твоём проекте `.cursor/rules/kz-academy.mdc` со ссылками `@~/kz-academy/SKILL.md` и `@~/kz-academy/connectors/`. | [installation-cursor.md](docs/installation-cursor.md) |
-| **🟢 Claude Desktop / Continue / Cline** (через MCP) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy && pip install "mcp[cli]>=1.0"</code></pre> Затем добавь блок MCP-сервера в config клиента (см. подробно). | [installation-mcp.md](docs/installation-mcp.md) |
-| **🟡 Claude.ai (web)** | Скачай нужные файлы (Code → Download ZIP) → распакуй → загрузи `SKILL.md` + карточки нужных коннекторов в **Project knowledge**. Клон не нужен. | [installation-claude-ai.md](docs/installation-claude-ai.md) |
-| **🟡 ChatGPT (Plus/Team)** | Скачай ZIP → загрузи `SKILL.md` + карточки в **Project / Custom GPT knowledge**. Клон не нужен. | [installation-chatgpt.md](docs/installation-chatgpt.md) |
-| **⚙️ Свой бот через Anthropic/OpenAI SDK** | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy</code></pre> Подгружай `SKILL.md` + карточки в system prompt программно (с prompt caching!). | [installation-via-api.md](docs/installation-via-api.md) |
-| **⚪ Любой generic LLM** (Gemini, Llama, DeepSeek...) | <pre><code>git clone https://github.com/Mobiss11/kz-academy.git<br>cd kz-academy<br>python scripts/bundle.py > bundle.md</code></pre> Вставь `bundle.md` в начало чата или в system prompt. | [installation-generic-llm.md](docs/installation-generic-llm.md) |
+| Инструмент | Подробно |
+|---|---|
+| 🟣 **Claude** | [installation-claude-code.md](docs/installation-claude-code.md) |
+| 🔵 **Cursor** | [installation-cursor.md](docs/installation-cursor.md) |
+| 🟢 **MCP-клиенты** (Continue / Cline / OpenAI Agents) | [installation-mcp.md](docs/installation-mcp.md) |
+| 🟡 **Claude.ai** (web) | [installation-claude-ai.md](docs/installation-claude-ai.md) |
+| 🟡 **ChatGPT** (Plus / Team) | [installation-chatgpt.md](docs/installation-chatgpt.md) |
+| ⚙️ **Свой бот через SDK** (Anthropic / OpenAI) | [installation-via-api.md](docs/installation-via-api.md) |
+| ⚪ **Любой generic LLM** (Gemini / Llama / DeepSeek / ...) | [installation-generic-llm.md](docs/installation-generic-llm.md) |
 
 ### Проверь что AI видит скилл
 
